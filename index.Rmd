@@ -11,22 +11,87 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r GlobalOptions}
+options(knitr.duplicate.label = 'allow')
 ```
 
-## Including Plots
+## Cleaning data
 
-You can also embed plots, for example:
+It might be not the most efficient way, however, I definitely need to remove columns with NAs and empty values:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r loadPackage, echo=FALSE}
+library("caret")
+
+assignment <- read.csv(file = "D:/pml-training.csv", sep = ",", header = TRUE, stringsAsFactors = FALSE)
+
+set.seed(333)
+In_train_f <- createDataPartition(y = assignment$classe, p = 0.7, list = FALSE)
+training_f <- assignment[In_train_f,]
+testing_f <- assignment[-In_train_f,]
+
+train_p <- Filter(function(x) !any(is.na(x)),
+           training_f)
+train_f <- data.frame(train_p[,!(colnames(train_p) %in% c("kurtosis_yaw_belt","kurtosis_picth_belt","skewness_roll_belt.1","skewness_roll_belt","amplitude_yaw_belt","kurtosis_picth_arm","kurtosis_yaw_arm","skewness_roll_arm","skewness_pitch_arm","skewness_yaw_arm","kurtosis_roll_dumbbell","kurtosis_picth_dumbbell","kurtosis_yaw_dumbbell","skewness_pitch_dumbbell","skewness_yaw_dumbbell","max_yaw_dumbbell","min_yaw_dumbbell","amplitude_yaw_belt","kurtosis_roll_forearm","kurtosis_picth_forearm","kurtosis_yaw_forearm","skewness_roll_forearm","skewness_pitch_forearm","skewness_yaw_forearm","max_yaw_forearm","min_yaw_forearm","amplitude_yaw_forearm","user_name", "skewness_yaw_belt","max_yaw_belt","min_yaw_belt","kurtosis_roll_arm","skewness_roll_dumbbell","amplitude_yaw_dumbbell","kurtosis_roll_arm","skewness_roll_dumbbell", "kurtosis_roll_belt","X","cvtd_timestamp","new_window"))])
+
+ncol(train_f)
+
+test_p <- Filter(function(x) !any(is.na(x)), testing_f)
+test_f <- data.frame(test_p[,!(colnames(test_p) %in% c("kurtosis_yaw_belt","kurtosis_picth_belt","skewness_roll_belt.1","skewness_roll_belt","amplitude_yaw_belt","kurtosis_picth_arm","kurtosis_yaw_arm","skewness_roll_arm","skewness_pitch_arm","skewness_yaw_arm","kurtosis_roll_dumbbell","kurtosis_picth_dumbbell","kurtosis_yaw_dumbbell","skewness_pitch_dumbbell","skewness_yaw_dumbbell","max_yaw_dumbbell","min_yaw_dumbbell","amplitude_yaw_belt","kurtosis_roll_forearm","kurtosis_picth_forearm","kurtosis_yaw_forearm","skewness_roll_forearm","skewness_pitch_forearm","skewness_yaw_forearm","max_yaw_forearm","min_yaw_forearm","amplitude_yaw_forearm","user_name", "skewness_yaw_belt","max_yaw_belt","min_yaw_belt","kurtosis_roll_arm","skewness_roll_dumbbell","amplitude_yaw_dumbbell","kurtosis_roll_arm","skewness_roll_dumbbell", "kurtosis_roll_belt","X","cvtd_timestamp","new_window"))])
+ncol(test_f)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Preprocess 
+
+Using principal component analysis, one can decrease a number of variables (that is no the only advantage, of course). In my case, it is extremely essential due to the fact that I do not have a powerful machine. I have decided to use thresh = 0,9.
+
+```{r preprocess, echo=FALSE}
+preprocess_f <- preProcess((train_f[,-56]), 
+                method = c("pca", "scale",
+                "center"), thresh = 0.9)
+PCA <- predict(preprocess_f, (train_f[,-56]))
+PCA2 <- predict(preprocess_f, (test_f[,-56]))
+
+For_m <- data.frame(classe = train_f$classe, PCA)
+For_t <- data.frame(classe = test_f$classe, PCA2)
+```
+
+## Fitting a model 
+
+After preprocessing I can fit my model. I have used CV, setting 8 folds. That should be quick enough as well as effective.
+
+```{r traning, echo=FALSE}
+set.seed(3333)
+TC <- trainControl(method="cv", number=8)
+GRID <- expand.grid(.mtry=c(1:5))
+RF2 <- train(data=For_m, y=For_m[,1], x=For_m[,2:21],
+       method="rf",trControl=TC, tuneGrid=GRID)
+RF2
+confusionMatrix(For_t$classe, predict(RF2, For_t))
+```
+
+We have got quite a good accuracy and stable cross validation performance.
+
+## Predicting with the model 
+
+First of all, I have to "clean" the new data and apply PCA preprocess. After that I can try my model, predicting results.
+
+```{r testing, echo=FALSE}
+test_20 <- read.csv(file = "D:/pml-testing.csv", 
+           sep = ",", header = TRUE, 
+           stringsAsFactors = FALSE)
+
+test_20_p <- Filter(function(x) !any(is.na(x)), test_20)
+test_20_f <- data.frame(test_20_p[,!(colnames(test_20_p) %in% c("X","cvtd_timestamp","new_window","user_name","problem_id"))])
+
+PCA3 <- predict(preprocess_f,(test_20_f))
+
+predict(RF2, PCA3)
+```
+
+I have choosed Random forest due to several factors:
+ 1) you can get feature importance;
+ 1) it is a robust method;
+ 2) you need not care about distribution;
+ 3) if you alter your RF well, it will not be very   time-consuming.
+ 
+ Thanks for reading!
