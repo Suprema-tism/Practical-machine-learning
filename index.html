@@ -373,10 +373,6 @@ summary {
 <div id="cleaning-data" class="section level2">
 <h2>Cleaning data</h2>
 <p>I have removed columns with NAs and empty values, thus the amount of remained vriables (y and all x) in both training and testing sets is 56 (I have also eliminated time)</p>
-<pre><code>## Warning: package &#39;caret&#39; was built under R version 3.6.2</code></pre>
-<pre><code>## Loading required package: lattice</code></pre>
-<pre><code>## Loading required package: ggplot2</code></pre>
-<pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 3.6.2</code></pre>
 <pre><code>## [1] 56</code></pre>
 <pre><code>## [1] 56</code></pre>
 </div>
@@ -475,7 +471,7 @@ RF2</code></pre>
 ## Detection Rate         0.2817   0.1873   0.1706   0.1562   0.1806
 ## Detection Prevalence   0.2845   0.1935   0.1743   0.1638   0.1839
 ## Balanced Accuracy      0.9930   0.9820   0.9700   0.9822   0.9952</code></pre>
-<p>We have got quite a good accuracy and stable cross validation performance.</p>
+<p>We have got quite a good accuracy (Accuracy : 0.9764) and stable cross validation performance.</p>
 </div>
 <div id="predicting-with-the-model" class="section level2">
 <h2>Predicting with the model</h2>
@@ -492,7 +488,11 @@ PCA3 &lt;- predict(preprocess_f,(test_20_f))
 predict(RF2, PCA3)</code></pre>
 <pre><code>##  [1] B A A A A E D B A A B C B A E E A B B B
 ## Levels: A B C D E</code></pre>
-<p>I have choosed Random forest due to several factors: 1) you can get feature importance; 1) it is a robust method; 2) you need not care about distribution; 3) if you alter your RF well, it will not be very time-consuming.</p>
+<p>I have chosen Random forest due to several factors: 
+  1) you can get feature importance; 
+  2) it is a robust method; 
+  3) you need not care about distribution; 
+  4) if you alter your RF well, it will not be very time-consuming.</p>
 <p>Thanks for reading!</p>
 </div>
 
