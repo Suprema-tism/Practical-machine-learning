@@ -21,7 +21,6 @@ I have removed columns with NAs and empty values, thus the amount of remained vr
 ```
 ## [1] 56
 ```
-
 ```
 ## [1] 56
 ```
