@@ -71,7 +71,7 @@ RF2
 confusionMatrix(For_t$classe, predict(RF2, For_t))
 ```
 
-We have got quite a good accuracy and stable cross validation performance.
+We have got quite a good accuracy (Accuracy : 0.9764) and stable cross validation performance.
 
 ## Predicting with the model 
 
@@ -90,7 +90,7 @@ PCA3 <- predict(preprocess_f,(test_20_f))
 predict(RF2, PCA3)
 ```
 
-I have choosed Random forest due to several factors:
+I have chosen Random forest due to several factors:
  1) you can get feature importance;
  1) it is a robust method;
  2) you need not care about distribution;
