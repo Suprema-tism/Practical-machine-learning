@@ -17,7 +17,7 @@ options(knitr.duplicate.label = 'allow')
 
 ## Cleaning data
 
-It might be not the most efficient way, however, I definitely need to remove columns with NAs and empty values:
+I have removed columns with NAs and empty values, thus the amount of remained vriables (y and all x) in both training and testing sets is 56 (I have also eliminated time)
 
 ```{r loadPackage, echo=FALSE}
 library("caret")
@@ -44,7 +44,7 @@ ncol(test_f)
 
 Using principal component analysis, one can decrease a number of variables (that is no the only advantage, of course). In my case, it is extremely essential due to the fact that I do not have a powerful machine. I have decided to use thresh = 0,9.
 
-```{r preprocess, echo=FALSE}
+```{r preprocess, echo=TRUE}
 preprocess_f <- preProcess((train_f[,-56]), 
                 method = c("pca", "scale",
                 "center"), thresh = 0.9)
@@ -53,16 +53,18 @@ PCA2 <- predict(preprocess_f, (test_f[,-56]))
 
 For_m <- data.frame(classe = train_f$classe, PCA)
 For_t <- data.frame(classe = test_f$classe, PCA2)
+preprocess_f
 ```
 
 ## Fitting a model 
 
-After preprocessing I can fit my model. I have used CV, setting 8 folds. That should be quick enough as well as effective.
+After preprocessing I can fit my model. I have used repeated CV, setting 5 folds. That should be quick enough as well as effective.
 
-```{r traning, echo=FALSE}
+```{r traning, echo=TRUE}
 set.seed(3333)
-TC <- trainControl(method="cv", number=8)
-GRID <- expand.grid(.mtry=c(1:5))
+TC <- trainControl(method="repeatedcv", number=5,
+      repeats=3)
+GRID <- expand.grid(.mtry=c(1:15))
 RF2 <- train(data=For_m, y=For_m[,1], x=For_m[,2:21],
        method="rf",trControl=TC, tuneGrid=GRID)
 RF2
@@ -75,7 +77,7 @@ We have got quite a good accuracy and stable cross validation performance.
 
 First of all, I have to "clean" the new data and apply PCA preprocess. After that I can try my model, predicting results.
 
-```{r testing, echo=FALSE}
+```{r testing, echo=TRUE}
 test_20 <- read.csv(file = "D:/pml-testing.csv", 
            sep = ",", header = TRUE, 
            stringsAsFactors = FALSE)

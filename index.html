@@ -372,7 +372,7 @@ summary {
 <pre class="r"><code>options(knitr.duplicate.label = &#39;allow&#39;)</code></pre>
 <div id="cleaning-data" class="section level2">
 <h2>Cleaning data</h2>
-<p>It might be not the most efficient way, however, I definitely need to remove columns with NAs and empty values:</p>
+<p>I have removed columns with NAs and empty values, thus the amount of remained vriables (y and all x) in both training and testing sets is 56 (I have also eliminated time)</p>
 <pre><code>## Warning: package &#39;caret&#39; was built under R version 3.6.2</code></pre>
 <pre><code>## Loading required package: lattice</code></pre>
 <pre><code>## Loading required package: ggplot2</code></pre>
@@ -383,10 +383,35 @@ summary {
 <div id="preprocess" class="section level2">
 <h2>Preprocess</h2>
 <p>Using principal component analysis, one can decrease a number of variables (that is no the only advantage, of course). In my case, it is extremely essential due to the fact that I do not have a powerful machine. I have decided to use thresh = 0,9.</p>
+<pre class="r"><code>preprocess_f &lt;- preProcess((train_f[,-56]), 
+                method = c(&quot;pca&quot;, &quot;scale&quot;,
+                &quot;center&quot;), thresh = 0.9)
+PCA &lt;- predict(preprocess_f, (train_f[,-56]))
+PCA2 &lt;- predict(preprocess_f, (test_f[,-56]))
+
+For_m &lt;- data.frame(classe = train_f$classe, PCA)
+For_t &lt;- data.frame(classe = test_f$classe, PCA2)
+preprocess_f</code></pre>
+<pre><code>## Created from 13737 samples and 55 variables
+## 
+## Pre-processing:
+##   - centered (55)
+##   - ignored (0)
+##   - principal component signal extraction (55)
+##   - scaled (55)
+## 
+## PCA needed 20 components to capture 90 percent of the variance</code></pre>
 </div>
 <div id="fitting-a-model" class="section level2">
 <h2>Fitting a model</h2>
-<p>After preprocessing I can fit my model. I have used CV, setting 8 folds. That should be quick enough as well as effective.</p>
+<p>After preprocessing I can fit my model. I have used repeated CV, setting 5 folds. That should be quick enough as well as effective.</p>
+<pre class="r"><code>set.seed(3333)
+TC &lt;- trainControl(method=&quot;repeatedcv&quot;, number=5,
+      repeats=3)
+GRID &lt;- expand.grid(.mtry=c(1:15))
+RF2 &lt;- train(data=For_m, y=For_m[,1], x=For_m[,2:21],
+       method=&quot;rf&quot;,trControl=TC, tuneGrid=GRID)
+RF2</code></pre>
 <pre><code>## Random Forest 
 ## 
 ## 13737 samples
@@ -394,56 +419,77 @@ summary {
 ##     5 classes: &#39;A&#39;, &#39;B&#39;, &#39;C&#39;, &#39;D&#39;, &#39;E&#39; 
 ## 
 ## No pre-processing
-## Resampling: Cross-Validated (8 fold) 
-## Summary of sample sizes: 12020, 12020, 12020, 12020, 12020, 12021, ... 
+## Resampling: Cross-Validated (5 fold, repeated 3 times) 
+## Summary of sample sizes: 10989, 10990, 10990, 10989, 10990, 10991, ... 
 ## Resampling results across tuning parameters:
 ## 
 ##   mtry  Accuracy   Kappa    
-##   1     0.9745936  0.9678620
-##   2     0.9754677  0.9689676
-##   3     0.9752492  0.9686895
-##   4     0.9745940  0.9678620
-##   5     0.9732840  0.9662067
+##    1    0.9709789  0.9632892
+##    2    0.9706876  0.9629219
+##    3    0.9698141  0.9618184
+##    4    0.9689162  0.9606810
+##    5    0.9689161  0.9606835
+##    6    0.9676302  0.9590574
+##    7    0.9670720  0.9583503
+##    8    0.9663196  0.9573981
+##    9    0.9656160  0.9565098
+##   10    0.9649849  0.9557113
+##   11    0.9639174  0.9543602
+##   12    0.9634808  0.9538075
+##   13    0.9625101  0.9525798
+##   14    0.9621461  0.9521216
+##   15    0.9613938  0.9511679
 ## 
 ## Accuracy was used to select the optimal model using the largest value.
-## The final value used for the model was mtry = 2.</code></pre>
+## The final value used for the model was mtry = 1.</code></pre>
+<pre class="r"><code>confusionMatrix(For_t$classe, predict(RF2, For_t))</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 1654   11    2    7    0
-##          B   14 1100   21    3    1
-##          C    2   12 1002   10    0
-##          D    1    2   34  923    4
-##          E    0    8    0    8 1066
+##          A 1658   10    1    4    1
+##          B   14 1102   18    3    2
+##          C    2   12 1004    8    0
+##          D    1    2   39  919    3
+##          E    0    8    1   10 1063
 ## 
 ## Overall Statistics
-##                                        
-##                Accuracy : 0.9762       
-##                  95% CI : (0.972, 0.98)
-##     No Information Rate : 0.2839       
-##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16    
-##                                        
-##                   Kappa : 0.9699       
-##                                        
-##  Mcnemar&#39;s Test P-Value : NA           
+##                                           
+##                Accuracy : 0.9764          
+##                  95% CI : (0.9722, 0.9801)
+##     No Information Rate : 0.2846          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9701          
+##                                           
+##  Mcnemar&#39;s Test P-Value : 0.0001835       
 ## 
 ## Statistics by Class:
 ## 
 ##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity            0.9898   0.9709   0.9462   0.9706   0.9953
-## Specificity            0.9953   0.9918   0.9950   0.9917   0.9967
-## Pos Pred Value         0.9881   0.9658   0.9766   0.9575   0.9852
-## Neg Pred Value         0.9960   0.9930   0.9883   0.9943   0.9990
-## Prevalence             0.2839   0.1925   0.1799   0.1616   0.1820
-## Detection Rate         0.2811   0.1869   0.1703   0.1568   0.1811
+## Sensitivity            0.9899   0.9718   0.9445   0.9735   0.9944
+## Specificity            0.9962   0.9922   0.9954   0.9909   0.9961
+## Pos Pred Value         0.9904   0.9675   0.9786   0.9533   0.9824
+## Neg Pred Value         0.9960   0.9933   0.9879   0.9949   0.9988
+## Prevalence             0.2846   0.1927   0.1806   0.1604   0.1816
+## Detection Rate         0.2817   0.1873   0.1706   0.1562   0.1806
 ## Detection Prevalence   0.2845   0.1935   0.1743   0.1638   0.1839
-## Balanced Accuracy      0.9925   0.9813   0.9706   0.9811   0.9960</code></pre>
+## Balanced Accuracy      0.9930   0.9820   0.9700   0.9822   0.9952</code></pre>
 <p>We have got quite a good accuracy and stable cross validation performance.</p>
 </div>
 <div id="predicting-with-the-model" class="section level2">
 <h2>Predicting with the model</h2>
 <p>First of all, I have to “clean” the new data and apply PCA preprocess. After that I can try my model, predicting results.</p>
+<pre class="r"><code>test_20 &lt;- read.csv(file = &quot;D:/pml-testing.csv&quot;, 
+           sep = &quot;,&quot;, header = TRUE, 
+           stringsAsFactors = FALSE)
+
+test_20_p &lt;- Filter(function(x) !any(is.na(x)), test_20)
+test_20_f &lt;- data.frame(test_20_p[,!(colnames(test_20_p) %in% c(&quot;X&quot;,&quot;cvtd_timestamp&quot;,&quot;new_window&quot;,&quot;user_name&quot;,&quot;problem_id&quot;))])
+
+PCA3 &lt;- predict(preprocess_f,(test_20_f))
+
+predict(RF2, PCA3)</code></pre>
 <pre><code>##  [1] B A A A A E D B A A B C B A E E A B B B
 ## Levels: A B C D E</code></pre>
 <p>I have choosed Random forest due to several factors: 1) you can get feature importance; 1) it is a robust method; 2) you need not care about distribution; 3) if you alter your RF well, it will not be very time-consuming.</p>
