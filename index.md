@@ -16,24 +16,7 @@ options(knitr.duplicate.label = 'allow')
 
 ## Cleaning data
 
-I have removed columns with NAs and empty values, thus the amount of remained vriables (y and all x) in both training and testing sets is 56 (I have also eliminated time)
-
-
-```
-## Warning: package 'caret' was built under R version 3.6.2
-```
-
-```
-## Loading required package: lattice
-```
-
-```
-## Loading required package: ggplot2
-```
-
-```
-## Warning: package 'ggplot2' was built under R version 3.6.2
-```
+I have removed columns with NAs and empty values, thus the amount of remained vriables (y and all x) in both training and testing sets is 56 (I have also eliminated time).
 
 ```
 ## [1] 56
@@ -159,7 +142,7 @@ confusionMatrix(For_t$classe, predict(RF2, For_t))
 ## Balanced Accuracy      0.9930   0.9820   0.9700   0.9822   0.9952
 ```
 
-We have got quite a good accuracy and stable cross validation performance.
+We have got quite a good accuracy (Accuracy : 0.9764) and stable cross validation performance.
 
 ## Predicting with the model 
 
@@ -184,10 +167,10 @@ predict(RF2, PCA3)
 ## Levels: A B C D E
 ```
 
-I have choosed Random forest due to several factors:
+I have chosen Random forest due to several factors:
  1) you can get feature importance;
  1) it is a robust method;
  2) you need not care about distribution;
- 3) if you alter your RF well, it will not be very   time-consuming.
+ 3) if you alter your RF well, it will not be very time-consuming.
  
  Thanks for reading!
